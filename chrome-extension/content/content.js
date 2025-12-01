@@ -134,12 +134,146 @@
       
       if (settings.enabled === true) {
         console.log('[AmoCRM Auto-Accept] Auto-accept is enabled, will accept this lead');
-        // Phase 2 will handle the actual clicking
-        // For now, just log that we detected it
+        
+        // PHASE 2: Click the accept button with human-like behavior
+        const acceptButton = card.querySelector('[data-content="Принять"]') ||
+                            card.querySelector('[class*="gnzs_catch_lead--acceptbutton"]');
+        
+        if (acceptButton) {
+          const minDelay = settings.minDelay || 1000;
+          const maxDelay = settings.maxDelay || 3000;
+          const delay = calculateRandomDelay(minDelay, maxDelay);
+          
+          console.log('[AmoCRM Auto-Accept] Will click accept button in', delay, 'ms');
+          
+          setTimeout(() => {
+            humanLikeClick(acceptButton);
+          }, delay);
+        } else {
+          console.warn('[AmoCRM Auto-Accept] Accept button not found');
+        }
       } else {
         console.log('[AmoCRM Auto-Accept] Auto-accept is disabled');
       }
     });
+  }
+
+  /**
+   * PHASE 2: HUMAN-LIKE CLICK SIMULATION
+   * Simulates realistic human behavior when clicking
+   */
+
+  /**
+   * Calculate random delay with natural jitter
+   * Simulates human reaction time (1-3 seconds by default)
+   */
+  function calculateRandomDelay(minMs, maxMs) {
+    const baseDelay = minMs + Math.random() * (maxMs - minMs);
+    // Add small random variations (±100ms) for more natural timing
+    const jitter = (Math.random() - 0.5) * 200;
+    return Math.max(minMs, Math.min(maxMs, baseDelay + jitter));
+  }
+
+  /**
+   * Click a button in a human-like manner
+   * 1. Check if button is visible and clickable
+   * 2. Move to random position within button (not dead center)
+   * 3. Dispatch realistic event sequence: mouseenter → mouseover → mousedown → mouseup → click
+   */
+  function humanLikeClick(element) {
+    // Verify the element exists and is visible
+    if (!element) {
+      console.error('[AmoCRM Auto-Accept] Element is null');
+      return false;
+    }
+
+    // Check if element is visible
+    if (!isElementVisible(element)) {
+      console.warn('[AmoCRM Auto-Accept] Element is not visible');
+      return false;
+    }
+
+    // Get element bounds
+    const rect = element.getBoundingClientRect();
+
+    // Calculate random position within element, avoiding the edges
+    // Use 30-70% range to avoid clicking near borders
+    const randomX = 0.3 + Math.random() * 0.4;
+    const randomY = 0.3 + Math.random() * 0.4;
+    
+    const clickX = rect.left + rect.width * randomX;
+    const clickY = rect.top + rect.height * randomY;
+
+    console.log('[AmoCRM Auto-Accept] Clicking at position:', {
+      x: Math.round(clickX),
+      y: Math.round(clickY),
+      buttonBounds: {
+        left: Math.round(rect.left),
+        top: Math.round(rect.top),
+        width: Math.round(rect.width),
+        height: Math.round(rect.height)
+      }
+    });
+
+    // Create realistic event sequence with small delays between events
+    const eventSequence = [
+      { type: 'mouseenter', delay: 0 },
+      { type: 'mouseover', delay: 50 },
+      { type: 'mousedown', delay: 100 },
+      { type: 'mouseup', delay: 50 },
+      { type: 'click', delay: 10 }
+    ];
+
+    let accumulatedDelay = 0;
+
+    for (const eventObj of eventSequence) {
+      accumulatedDelay += eventObj.delay;
+      
+      setTimeout(() => {
+        const event = new MouseEvent(eventObj.type, {
+          bubbles: true,
+          cancelable: true,
+          view: window,
+          clientX: clickX,
+          clientY: clickY,
+          screenX: clickX,
+          screenY: clickY,
+          buttons: eventObj.type === 'mousedown' ? 1 : 0
+        });
+
+        element.dispatchEvent(event);
+        console.log('[AmoCRM Auto-Accept] Dispatched event:', eventObj.type);
+      }, accumulatedDelay);
+    }
+
+    return true;
+  }
+
+  /**
+   * Check if an element is visible in the viewport
+   */
+  function isElementVisible(element) {
+    if (!element) return false;
+
+    // Check if element has zero dimensions
+    const rect = element.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) {
+      return false;
+    }
+
+    // Check if element is hidden by CSS
+    const style = window.getComputedStyle(element);
+    if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
+      return false;
+    }
+
+    // Check if element is within viewport
+    if (rect.bottom < 0 || rect.right < 0 || 
+        rect.top > window.innerHeight || rect.left > window.innerWidth) {
+      return false;
+    }
+
+    return true;
   }
 
   // Example function to perform an action on the page

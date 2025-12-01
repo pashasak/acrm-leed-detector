@@ -159,7 +159,4 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
   }
-
-  // Update statistics every 5 seconds
-  setInterval(loadSettings, 5000);
 });

@@ -13,17 +13,6 @@
     console.log('[AmoCRM Auto-Accept] Content script received message:', message);
 
     switch (message.action) {
-      case 'performAction':
-        performAction()
-          .then(() => sendResponse({ success: true }))
-          .catch((error) => sendResponse({ success: false, error: error.message }));
-        return true; // Keep channel open for async response
-
-      case 'getData':
-        const data = collectPageData();
-        sendResponse({ success: true, data });
-        break;
-
       default:
         sendResponse({ success: false, error: 'Unknown action' });
     }
@@ -324,29 +313,6 @@
     }
 
     return true;
-  }
-
-  // Example function to perform an action on the page
-  async function performAction() {
-    // Implement your DOM manipulation or page interaction here
-    console.log('[AmoCRM Auto-Accept] Performing action on page:', window.location.href);
-    
-    // Example: Highlight all links
-    const links = document.querySelectorAll('a');
-    links.forEach((link) => {
-      link.style.backgroundColor = 'yellow';
-    });
-
-    return true;
-  }
-
-  // Example function to collect data from the page
-  function collectPageData() {
-    return {
-      title: document.title,
-      url: window.location.href,
-      links: document.querySelectorAll('a').length
-    };
   }
 
   // Initialize content script

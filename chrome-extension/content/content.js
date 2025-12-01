@@ -147,7 +147,15 @@
           console.log('[AmoCRM Auto-Accept] Will click accept button in', delay, 'ms');
           
           setTimeout(() => {
-            humanLikeClick(acceptButton);
+            if (humanLikeClick(acceptButton)) {
+              // Update statistics
+              updateStatistics(settings);
+              
+              // Play sound if enabled
+              if (settings.playSound) {
+                playNotificationSound();
+              }
+            }
           }, delay);
         } else {
           console.warn('[AmoCRM Auto-Accept] Accept button not found');
@@ -156,6 +164,48 @@
         console.log('[AmoCRM Auto-Accept] Auto-accept is disabled');
       }
     });
+  }
+
+  /**
+   * Update statistics when a lead is accepted
+   */
+  function updateStatistics(settings) {
+    const stats = settings.stats || { totalAccepted: 0, lastAccepted: null };
+    stats.totalAccepted = (stats.totalAccepted || 0) + 1;
+    stats.lastAccepted = new Date().toISOString();
+
+    const updatedSettings = { ...settings, stats };
+    chrome.storage.local.set({ autoAccept: updatedSettings }, () => {
+      console.log('[AmoCRM Auto-Accept] Statistics updated:', stats);
+    });
+  }
+
+  /**
+   * Play a notification sound when a lead is accepted
+   */
+  function playNotificationSound() {
+    // Create a simple beep using Web Audio API
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+
+      oscillator.connect(gain);
+      gain.connect(audioContext.destination);
+
+      oscillator.frequency.value = 800; // 800 Hz
+      oscillator.type = 'sine';
+
+      gain.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.2);
+
+      console.log('[AmoCRM Auto-Accept] Notification sound played');
+    } catch (error) {
+      console.warn('[AmoCRM Auto-Accept] Could not play notification sound:', error);
+    }
   }
 
   /**

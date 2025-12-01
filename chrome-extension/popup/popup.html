@@ -3,15 +3,103 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Extension Popup</title>
+  <title>AmoCRM Auto-Accept</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
   <div class="container">
-    <h1>My Extension</h1>
-    <p id="status">Extension is active</p>
-    <button id="actionBtn" class="btn">Click Me</button>
+    <!-- Header -->
+    <div class="header">
+      <h1>Auto-Accept Lead</h1>
+      <p class="subtitle">AmoCRM Assistant</p>
+    </div>
+
+    <!-- Status Section -->
+    <div class="status-section">
+      <div class="status-card">
+        <div class="status-header">
+          <span class="status-label">Status:</span>
+          <span class="status-value" id="statusValue">Disabled</span>
+        </div>
+        <div class="status-indicator" id="statusIndicator"></div>
+      </div>
+    </div>
+
+    <!-- Toggle Section -->
+    <div class="settings-section">
+      <div class="setting-item">
+        <label class="toggle-label">
+          <input type="checkbox" id="autoAcceptToggle" class="toggle-input">
+          <span class="toggle-slider"></span>
+          <span class="toggle-text">Enable Auto-Accept</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Delay Configuration -->
+    <div class="settings-section">
+      <div class="section-title">Reaction Delay (milliseconds)</div>
+      
+      <div class="setting-item">
+        <label for="minDelayInput">Minimum Delay:</label>
+        <div class="input-group">
+          <input type="number" id="minDelayInput" class="delay-input" min="500" max="5000" step="100">
+          <span class="ms-label">ms</span>
+        </div>
+      </div>
+
+      <div class="setting-item">
+        <label for="maxDelayInput">Maximum Delay:</label>
+        <div class="input-group">
+          <input type="number" id="maxDelayInput" class="delay-input" min="500" max="5000" step="100">
+          <span class="ms-label">ms</span>
+        </div>
+      </div>
+
+      <div class="delay-presets">
+        <button class="preset-btn" data-preset="fast">Fast (0.5-1s)</button>
+        <button class="preset-btn" data-preset="normal">Normal (1-3s)</button>
+        <button class="preset-btn" data-preset="slow">Slow (2-5s)</button>
+      </div>
+    </div>
+
+    <!-- Sound Option -->
+    <div class="settings-section">
+      <div class="setting-item">
+        <label class="toggle-label">
+          <input type="checkbox" id="soundToggle" class="toggle-input">
+          <span class="toggle-slider"></span>
+          <span class="toggle-text">Play sound on new lead</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="settings-section">
+      <div class="section-title">Statistics</div>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-value" id="totalAccepted">0</div>
+          <div class="stat-label">Leads Accepted</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="lastAccepted">--:--</div>
+          <div class="stat-label">Last Accepted</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reset Button -->
+    <div class="settings-section">
+      <button id="resetBtn" class="btn btn-secondary">Reset Statistics</button>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>Changes are saved automatically</p>
+    </div>
   </div>
+
   <script src="popup.js"></script>
 </body>
 </html>

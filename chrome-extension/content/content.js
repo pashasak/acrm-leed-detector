@@ -30,14 +30,22 @@
         // Check added nodes
         for (const node of mutation.addedNodes) {
           if (node.nodeType === Node.ELEMENT_NODE) {
-            // Check if the added node itself is a lead card
-            if (isLeadCard(node)) {
-              handleNewLeadDetected(node);
+            // Check if the added node itself is a notification container
+            if (isLeadNotificationContainer(node)) {
+              const card = node.querySelector('[class*="gnzs_catch_lead--card"]');
+              if (card) {
+                handleNewLeadDetected(card);
+              }
             }
-            // Check if any descendants are lead cards
-            const leadCards = node.querySelectorAll?.('[class*="gnzs_catch_lead--card"]');
-            if (leadCards) {
-              leadCards.forEach(card => handleNewLeadDetected(card));
+            // Check if any descendants are notification containers
+            const containers = node.querySelectorAll?.('[data-entity="gnzs-catch-lead-notif-container"]');
+            if (containers) {
+              containers.forEach(container => {
+                const card = container.querySelector('[class*="gnzs_catch_lead--card"]');
+                if (card) {
+                  handleNewLeadDetected(card);
+                }
+              });
             }
           }
         }
@@ -51,13 +59,24 @@
     });
 
     console.log('[AmoCRM Auto-Accept] Lead detection initialized');
+    
+    // Also check for existing notifications on page load
+    setTimeout(() => {
+      const existingContainers = document.querySelectorAll('[data-entity="gnzs-catch-lead-notif-container"]');
+      existingContainers.forEach(container => {
+        const card = container.querySelector('[class*="gnzs_catch_lead--card"]');
+        if (card) {
+          handleNewLeadDetected(card);
+        }
+      });
+    }, 1000);
   }
 
   /**
-   * Check if element is a lead card
+   * Check if element is a lead notification container
    */
-  function isLeadCard(element) {
-    return element.matches?.('[class*="gnzs_catch_lead--card"]') === true;
+  function isLeadNotificationContainer(element) {
+    return element.matches?.('[data-entity="gnzs-catch-lead-notif-container"]') === true;
   }
 
   /**
@@ -67,21 +86,24 @@
     // Check for title "Новая заявка"
     const titleElement = card.querySelector('[class*="gnzs_catch_lead--title"]');
     if (!titleElement) {
+      console.log('[AmoCRM Auto-Accept] Title element not found');
       return false;
     }
 
     const titleText = titleElement.textContent?.trim();
+    console.log('[AmoCRM Auto-Accept] Title text:', titleText);
     if (titleText !== 'Новая заявка') {
       return false;
     }
 
-    // Check for accept button
-    const acceptButton = card.querySelector('[data-content="Принять"]') ||
-                        card.querySelector('[class*="gnzs_catch_lead--acceptbutton"]');
+    // Check for accept button - use more specific selector
+    const acceptButton = card.querySelector('[class*="gnzs_catch_lead--acceptbutton"]');
     if (!acceptButton) {
+      console.log('[AmoCRM Auto-Accept] Accept button not found');
       return false;
     }
 
+    console.log('[AmoCRM Auto-Accept] Lead card validated successfully');
     return true;
   }
 
@@ -125,8 +147,7 @@
         console.log('[AmoCRM Auto-Accept] Auto-accept is enabled, will accept this lead');
         
         // PHASE 2: Click the accept button with human-like behavior
-        const acceptButton = card.querySelector('[data-content="Принять"]') ||
-                            card.querySelector('[class*="gnzs_catch_lead--acceptbutton"]');
+        const acceptButton = card.querySelector('[class*="gnzs_catch_lead--acceptbutton"]');
         
         if (acceptButton) {
           const minDelay = settings.minDelay || 1000;
@@ -134,9 +155,11 @@
           const delay = calculateRandomDelay(minDelay, maxDelay);
           
           console.log('[AmoCRM Auto-Accept] Will click accept button in', delay, 'ms');
+          console.log('[AmoCRM Auto-Accept] Accept button element:', acceptButton);
           
           setTimeout(() => {
             if (humanLikeClick(acceptButton)) {
+              console.log('[AmoCRM Auto-Accept] ✓ Lead accepted successfully!');
               // Update statistics
               updateStatistics(settings);
               
@@ -147,7 +170,7 @@
             }
           }, delay);
         } else {
-          console.warn('[AmoCRM Auto-Accept] Accept button not found');
+          console.warn('[AmoCRM Auto-Accept] Accept button not found in card');
         }
       } else {
         console.log('[AmoCRM Auto-Accept] Auto-accept is disabled');

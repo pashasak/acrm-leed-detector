@@ -74,6 +74,14 @@ document.addEventListener('DOMContentLoaded', () => {
       chrome.storage.local.set({ autoAccept: updatedSettings }, () => {
         console.log('[AmoCRM Auto-Accept Popup] Settings saved:', updatedSettings);
         updateStatusDisplay(settings.enabled);
+        
+        // Notify background script and content scripts about settings change
+        chrome.runtime.sendMessage({
+          action: 'settingsUpdated',
+          settings: updatedSettings
+        }).catch(() => {
+          // Background script might not be ready, ignore
+        });
       });
     });
   }

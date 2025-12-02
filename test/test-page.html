@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AmoCRM Lead Notification Test Page</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+        }
+
+        .control-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            height: fit-content;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 20px;
+        }
+
+        .control-panel h2 {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            color: #555;
+            font-weight: 500;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+            border: 2px solid #ddd;
+        }
+
+        .btn-secondary:hover {
+            background: #efefef;
+            border-color: #bbb;
+        }
+
+        .btn-danger {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #ee5a52;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255, 107, 107, 0.4);
+        }
+
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toggle-switch input[type="checkbox"] {
+            width: 40px;
+            height: 24px;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+            color: #333;
+        }
+
+        select:hover {
+            border-color: #667eea;
+        }
+
+        .stats-display {
+            background: #f9f9f9;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            color: #555;
+            font-size: 13px;
+        }
+
+        .stat-label {
+            font-weight: 500;
+        }
+
+        .stat-value {
+            background: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 700;
+            color: #667eea;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .notifications-area {
+            flex: 1;
+        }
+
+        .notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* AmoCRM Notification Styles */
+        .gnzs-catch-lead-notif-container {
+            position: relative;
+            width: 350px;
+        }
+
+        .gnzs_catch_lead--card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .gnzs_catch_lead--card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        }
+
+        [class*="gnzs_catch_lead--title"] {
+            font-size: 16px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        [class*="gnzs_catch_lead--description"] {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        [class*="gnzs_catch_lead--controls"] {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        [class*="gnzs_catch_lead--acceptbutton"] {
+            flex: 1;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        [class*="gnzs_catch_lead--acceptbutton"]:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        [class*="gnzs_catch_lead--acceptbutton"]:active {
+            transform: translateY(0);
+        }
+
+        [class*="gnzs_catch_lead--buttonOverlay"] {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        [class*="gnzs_catch_lead--buttonText"] {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .svg-icon {
+            display: inline-block;
+            flex-shrink: 0;
+        }
+
+        [class*="gnzs_catch_lead--cancelButton"] {
+            width: 40px;
+            height: 40px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+            padding: 0;
+        }
+
+        [class*="gnzs_catch_lead--cancelButton"]:hover {
+            border-color: #ccc;
+            background: #f9f9f9;
+        }
+
+        [class*="gnzs_catch_lead--closeModal"] {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 24px;
+            height: 24px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            transition: color 0.3s ease;
+            padding: 0;
+        }
+
+        [class*="gnzs_catch_lead--closeModal"]:hover {
+            color: #333;
+        }
+
+        .gnzs_catch_lead--loading {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        .debug-console {
+            background: #1e1e1e;
+            color: #00ff00;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+            height: 250px;
+            overflow-y: auto;
+            margin-top: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .debug-log {
+            margin: 4px 0;
+            line-height: 1.4;
+        }
+
+        .log-blue {
+            color: #4ec9ff;
+        }
+
+        .log-green {
+            color: #4ade80;
+        }
+
+        .log-red {
+            color: #ff6b6b;
+        }
+
+        .log-orange {
+            color: #ffa500;
+        }
+
+        .log-gray {
+            color: #888888;
+        }
+
+        .notification-queue {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+        }
+
+        .notification-queue-item {
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .notification-queue-item.pending {
+            border-left: 3px solid #667eea;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #5568d3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 AmoCRM Lead Notification Test Page</h1>
+            <p>Test your Chrome extension with simulated AmoCRM notifications</p>
+        </div>
+
+        <div class="main-content">
+            <div class="control-panel">
+                <h2>Test Controls</h2>
+
+                <div class="control-group">
+                    <button class="btn-primary" id="spawnBtn">📨 Spawn Notification</button>
+                </div>
+
+                <div class="control-group">
+                    <label>Auto-Spawn</label>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="autoSpawnToggle">
+                        <span id="autoSpawnStatus">Disabled</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label for="intervalSelect">Spawn Interval</label>
+                    <select id="intervalSelect">
+                        <option value="5000">5 seconds</option>
+                        <option value="10000" selected>10 seconds</option>
+                        <option value="20000">20 seconds</option>
+                        <option value="30000">30 seconds</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <button class="btn-danger" id="clearAllBtn">🗑️ Clear All</button>
+                </div>
+
+                <div class="stats-display">
+                    <div class="stat-item">
+                        <span class="stat-label">Total Spawned</span>
+                        <span class="stat-value" id="statSpawned">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Accepted</span>
+                        <span class="stat-value" id="statAccepted">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Canceled</span>
+                        <span class="stat-value" id="statCanceled">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Timed Out</span>
+                        <span class="stat-value" id="statTimeout">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Auto-Clicked</span>
+                        <span class="stat-value" id="statAutoClicked">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Avg Response</span>
+                        <span class="stat-value" id="statAvgResponse">0ms</span>
+                    </div>
+                </div>
+
+                <div class="notification-queue">
+                    <div id="queueDisplay">No active notifications</div>
+                </div>
+
+                <div class="control-group" style="margin-top: 20px;">
+                    <button class="btn-secondary" id="resetStatsBtn">Reset Stats</button>
+                </div>
+            </div>
+
+            <div class="notifications-area">
+                <div class="debug-console">
+                    <div id="debugLog"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="notificationsContainer"></div>
+
+    <script>
+        // ============== EXTENSION DETECTION ==============
+        const extensionDetection = {
+            observer: null,
+            observerActive: false,
+            
+            init() {
+                this.observerActive = true;
+                this.startMutationObserver();
+                debugLog.log('Extension detection system initialized', 'blue');
+            },
+
+            startMutationObserver() {
+                const container = document.getElementById('notificationsContainer');
+                
+                this.observer = new MutationObserver((mutations) => {
+                    mutations.forEach((mutation) => {
+                        if (mutation.type === 'childList') {
+                            mutation.removedNodes.forEach((node) => {
+                                if (node.nodeType === Node.ELEMENT_NODE && 
+                                    node.classList.contains('notification-container')) {
+                                    this.handleNotificationRemoved(node);
+                                }
+                            });
+                        }
+                    });
+                });
+
+                this.observer.observe(container, { childList: true, subtree: false });
+            },
+
+            handleNotificationRemoved(element) {
+                const notificationId = parseInt(element.dataset.notificationId);
+                const notification = state.activeNotifications.get(notificationId);
+
+                if (notification && !notification.manuallyRemoved) {
+                    // Notification was removed without manual user interaction
+                    const responseTime = Date.now() - notification.spawnedAt;
+                    state.stats.responseTimes.push(responseTime);
+                    state.stats.accepted++;
+                    state.stats.autoClicked++;
+                    notification.autoClicked = true;
+                    notification.clickedAt = Date.now();
+                    
+                    debugLog.accept(notificationId, true);
+                    updateStats();
+                }
+
+                // Always remove from active map when element is removed from DOM
+                if (state.activeNotifications.has(notificationId)) {
+                    state.activeNotifications.delete(notificationId);
+                    updateQueueDisplay();
+                }
+            },
+
+            // Check if a notification was removed by extension (not in activeNotifications anymore)
+            checkAutoRemoval(notificationId) {
+                if (!state.activeNotifications.has(notificationId)) {
+                    return true; // Was removed (possibly by extension)
+                }
+                return false;
+            },
+
+            // Mark notification as extension-clicked if removed unexpectedly
+            markAsAutoClicked(notificationId) {
+                const notification = state.activeNotifications.get(notificationId);
+                if (notification) {
+                    notification.autoClicked = true;
+                    return true;
+                }
+                return false;
+            }
+        };
+
+        // ============== STATE MANAGEMENT ==============
+        const state = {
+            stats: {
+                spawned: 0,
+                accepted: 0,
+                canceled: 0,
+                timeout: 0,
+                autoClicked: 0,
+                responseTimes: []
+            },
+            autoSpawnEnabled: false,
+            autoSpawnInterval: null,
+            activeNotifications: new Map(),
+            notificationIdCounter: 0
+        };
+
+        // ============== DEBUG LOGGING ==============
+        const debugLog = {
+            log(message, type = 'gray') {
+                const timestamp = new Date().toLocaleTimeString();
+                const logElement = document.createElement('div');
+                logElement.className = `debug-log log-${type}`;
+                logElement.textContent = `[${timestamp}] ${message}`;
+                
+                const debugContainer = document.getElementById('debugLog');
+                debugContainer.appendChild(logElement);
+                debugContainer.scrollTop = debugContainer.scrollHeight;
+            },
+            spawn(id) {
+                this.log(`📨 Notification #${id} spawned`, 'blue');
+            },
+            accept(id, isAuto = false) {
+                const prefix = isAuto ? '🤖' : '✅';
+                this.log(`${prefix} Notification #${id} accepted${isAuto ? ' (auto)' : ''}`, 'green');
+            },
+            cancel(id) {
+                this.log(`❌ Notification #${id} canceled`, 'red');
+            },
+            timeout(id) {
+                this.log(`⏱️ Notification #${id} timed out`, 'orange');
+            },
+            toggle(enabled) {
+                this.log(`Auto-spawn ${enabled ? 'enabled' : 'disabled'}`, enabled ? 'green' : 'red');
+            }
+        };
+
+        // ============== NOTIFICATION GENERATOR ==============
+        function createNotification(id) {
+            const container = document.createElement('div');
+            container.className = 'notification-container';
+            container.dataset.notificationId = id;
+
+            // Generate random hash-like class names for realistic AmoCRM styling
+            const cardHash = `${Math.random().toString(36).substr(2, 10)}`;
+            const titleHash = `${Math.random().toString(36).substr(2, 10)}`;
+            const descHash = `${Math.random().toString(36).substr(2, 10)}`;
+            const acceptHash = `${Math.random().toString(36).substr(2, 10)}`;
+            const buttonOverlayHash = `${Math.random().toString(36).substr(2, 10)}`;
+            const buttonTextHash = `${Math.random().toString(36).substr(2, 10)}`;
+            const buttonTitleHash = `${Math.random().toString(36).substr(2, 10)}`;
+            const controlsHash = `${Math.random().toString(36).substr(2, 10)}`;
+            const cancelHash = `${Math.random().toString(36).substr(2, 10)}`;
+            const closeHash = `${Math.random().toString(36).substr(2, 10)}`;
+
+            container.innerHTML = `
+                <div data-entity="gnzs-catch-lead-notif-container" class="gnzs-catch-lead-notif-container">
+                    <div class="gnzs_catch_lead--card---${cardHash} undefined">
+                        <div class="gnzs_catch_lead--title---${titleHash}">Новая заявка</div>
+                        <div class="gnzs_catch_lead--description---${descHash}">Будь первым!</div>
+                        <div></div>
+                        <div class="gnzs_catch_lead--controls---${controlsHash}">
+                            <div data-content="Принять" class="gnzs_catch_lead--acceptbutton---${acceptHash}">
+                                <div class="gnzs_catch_lead--buttonOverlay---${buttonOverlayHash}" style="animation: 20s linear 0s 1 normal forwards running gnzs_catch_lead--loading---2o_CeGJ-Nc1gGKaTonfZvu;">
+                                    <div class="gnzs_catch_lead--buttonText---${buttonTextHash}">
+                                        <svg class="svg-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                        Принять
+                                    </div>
+                                </div>
+                                <div class="gnzs_catch_lead--buttonTitle---${buttonTitleHash}">
+                                    <div class="gnzs_catch_lead--buttonText---${buttonTextHash}">
+                                        <svg class="svg-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                        Принять
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="gnzs_catch_lead--cancelButton---${cancelHash}">
+                                <svg class="svg-icon svg-common--cross-close-dims" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                            </button>
+                        </div>
+                        <button type="button" class="gnzs_catch_lead--closeModal---${closeHash}">
+                            <svg class="svg-icon svg-common--cross-close-dims" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            return container;
+        }
+
+        // ============== EVENT HANDLERS ==============
+        function handleAccept(notificationElement, isAuto = false) {
+            const notificationId = parseInt(notificationElement.dataset.notificationId);
+            const notification = state.activeNotifications.get(notificationId);
+            
+            if (!notification) return;
+
+            const responseTime = Date.now() - notification.spawnedAt;
+            state.stats.responseTimes.push(responseTime);
+            state.stats.accepted++;
+            if (isAuto) state.stats.autoClicked++;
+
+            debugLog.accept(notificationId, isAuto);
+            removeNotification(notificationElement);
+            updateStats();
+        }
+
+        function handleCancel(notificationElement) {
+            const notificationId = parseInt(notificationElement.dataset.notificationId);
+            state.stats.canceled++;
+            debugLog.cancel(notificationId);
+            removeNotification(notificationElement);
+            updateStats();
+        }
+
+        function handleTimeout(notificationElement) {
+            const notificationId = parseInt(notificationElement.dataset.notificationId);
+            if (!state.activeNotifications.has(notificationId)) return;
+            
+            const notification = state.activeNotifications.get(notificationId);
+            notification.manuallyRemoved = true; // Mark as handled by timeout
+            
+            state.stats.timeout++;
+            debugLog.timeout(notificationId);
+            removeNotification(notificationElement);
+            updateStats();
+        }
+
+        function removeNotification(element) {
+            const notificationId = parseInt(element.dataset.notificationId);
+            const notification = state.activeNotifications.get(notificationId);
+            
+            // Mark as manually removed to prevent auto-click detection from triggering
+            if (notification) {
+                notification.manuallyRemoved = true;
+            }
+            
+            element.style.animation = 'none';
+            element.offsetHeight;
+            element.style.animation = 'slideIn 0.3s ease-out reverse';
+            setTimeout(() => element.remove(), 300);
+        }
+
+        // ============== NOTIFICATION SPAWNING ==============
+        function spawnNotification() {
+            const id = ++state.notificationIdCounter;
+            const container = createNotification(id);
+            
+            document.getElementById('notificationsContainer').appendChild(container);
+
+            const notificationData = {
+                id: id,
+                spawnedAt: Date.now(),
+                element: container,
+                manuallyRemoved: false,
+                autoClicked: false,
+                clickedAt: null
+            };
+
+            state.activeNotifications.set(id, notificationData);
+            state.stats.spawned++;
+            debugLog.spawn(id);
+
+            // Attach event listeners using CSS selectors that match the real AmoCRM DOM structure
+            const acceptBtn = container.querySelector('[data-content="Принять"]');
+            const cancelBtn = container.querySelector('[class*="gnzs_catch_lead--cancelButton"]');
+            const closeBtn = container.querySelector('[class*="gnzs_catch_lead--closeModal"]');
+
+            if (acceptBtn) {
+                acceptBtn.addEventListener('click', () => {
+                    const notif = state.activeNotifications.get(id);
+                    if (notif) {
+                        notif.manuallyRemoved = true;
+                        notif.clickedAt = Date.now();
+                    }
+                    handleAccept(container);
+                });
+            }
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', () => {
+                    const notif = state.activeNotifications.get(id);
+                    if (notif) {
+                        notif.manuallyRemoved = true;
+                        notif.clickedAt = Date.now();
+                    }
+                    handleCancel(container);
+                });
+            }
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    const notif = state.activeNotifications.get(id);
+                    if (notif) {
+                        notif.manuallyRemoved = true;
+                        notif.clickedAt = Date.now();
+                    }
+                    handleCancel(container);
+                });
+            }
+
+            // Auto-timeout after 20 seconds
+            const timeoutId = setTimeout(() => {
+                if (state.activeNotifications.has(id)) {
+                    handleTimeout(container);
+                }
+            }, 20000);
+
+            notificationData.timeoutId = timeoutId;
+
+            updateStats();
+            updateQueueDisplay();
+        }
+
+        // ============== AUTO-SPAWN SYSTEM ==============
+        function startAutoSpawn() {
+            state.autoSpawnEnabled = true;
+            document.getElementById('autoSpawnStatus').textContent = 'Enabled';
+            document.getElementById('autoSpawnToggle').checked = true;
+            debugLog.toggle(true);
+
+            const interval = parseInt(document.getElementById('intervalSelect').value);
+            state.autoSpawnInterval = setInterval(spawnNotification, interval);
+        }
+
+        function stopAutoSpawn() {
+            state.autoSpawnEnabled = false;
+            document.getElementById('autoSpawnStatus').textContent = 'Disabled';
+            document.getElementById('autoSpawnToggle').checked = false;
+            debugLog.toggle(false);
+
+            if (state.autoSpawnInterval) {
+                clearInterval(state.autoSpawnInterval);
+                state.autoSpawnInterval = null;
+            }
+        }
+
+        // ============== UI UPDATES ==============
+        function updateStats() {
+            document.getElementById('statSpawned').textContent = state.stats.spawned;
+            document.getElementById('statAccepted').textContent = state.stats.accepted;
+            document.getElementById('statCanceled').textContent = state.stats.canceled;
+            document.getElementById('statTimeout').textContent = state.stats.timeout;
+            document.getElementById('statAutoClicked').textContent = state.stats.autoClicked;
+
+            const avgTime = state.stats.responseTimes.length > 0
+                ? Math.round(state.stats.responseTimes.reduce((a, b) => a + b) / state.stats.responseTimes.length)
+                : 0;
+            document.getElementById('statAvgResponse').textContent = `${avgTime}ms`;
+        }
+
+        function updateQueueDisplay() {
+            const queueDisplay = document.getElementById('queueDisplay');
+            const count = state.activeNotifications.size;
+
+            if (count === 0) {
+                queueDisplay.innerHTML = '<div style="color: #999;">No active notifications</div>';
+            } else {
+                let html = `<div style="font-weight: bold; margin-bottom: 8px; color: #333;">Active: ${count}</div>`;
+                state.activeNotifications.forEach((notif) => {
+                    const age = Math.round((Date.now() - notif.spawnedAt) / 1000);
+                    html += `<div class="notification-queue-item pending">#${notif.id} - ${age}s ago</div>`;
+                });
+                queueDisplay.innerHTML = html;
+            }
+        }
+
+        // ============== EVENT LISTENERS ==============
+        document.getElementById('spawnBtn').addEventListener('click', spawnNotification);
+
+        document.getElementById('autoSpawnToggle').addEventListener('change', (e) => {
+            if (e.target.checked) {
+                startAutoSpawn();
+            } else {
+                stopAutoSpawn();
+            }
+        });
+
+        document.getElementById('intervalSelect').addEventListener('change', () => {
+            if (state.autoSpawnEnabled) {
+                stopAutoSpawn();
+                startAutoSpawn();
+            }
+        });
+
+        document.getElementById('clearAllBtn').addEventListener('click', () => {
+            state.activeNotifications.forEach((notif) => {
+                notif.element.remove();
+            });
+            state.activeNotifications.clear();
+            debugLog.log('Cleared all notifications', 'orange');
+            updateQueueDisplay();
+        });
+
+        document.getElementById('resetStatsBtn').addEventListener('click', () => {
+            state.stats = {
+                spawned: 0,
+                accepted: 0,
+                canceled: 0,
+                timeout: 0,
+                autoClicked: 0,
+                responseTimes: []
+            };
+            debugLog.log('Stats reset', 'orange');
+            updateStats();
+        });
+
+        // ============== INITIAL STATE ==============
+        debugLog.log('Test page loaded', 'blue');
+        debugLog.log('Ready to spawn notifications', 'green');
+        extensionDetection.init();
+        updateStats();
+        updateQueueDisplay();
+    </script>
+</body>
+</html>

@@ -13,9 +13,17 @@
     console.log('[AmoCRM Auto-Accept] Content script received message:', message);
 
     switch (message.action) {
+      case 'settingsUpdated':
+        console.log('[AmoCRM Auto-Accept] Settings updated:', message.settings);
+        sendResponse({ success: true });
+        break;
+      case 'getStatus':
+        sendResponse({ success: true, status: 'active' });
+        break;
       default:
         sendResponse({ success: false, error: 'Unknown action' });
     }
+    return true;
   });
 
   /**
@@ -96,8 +104,10 @@
       return false;
     }
 
-    // Check for accept button - use more specific selector
-    const acceptButton = card.querySelector('[class*="gnzs_catch_lead--acceptbutton"]');
+    // Check for accept button - use multiple selectors for better compatibility
+    const acceptButton = card.querySelector('[class*="gnzs_catch_lead--acceptbutton"]') || 
+                         card.querySelector('[data-content="Принять"]') ||
+                         card.querySelector('[data-action="accept"]');
     if (!acceptButton) {
       console.log('[AmoCRM Auto-Accept] Accept button not found');
       return false;
@@ -147,7 +157,9 @@
         console.log('[AmoCRM Auto-Accept] Auto-accept is enabled, will accept this lead');
         
         // PHASE 2: Click the accept button with human-like behavior
-        const acceptButton = card.querySelector('[class*="gnzs_catch_lead--acceptbutton"]');
+        const acceptButton = card.querySelector('[class*="gnzs_catch_lead--acceptbutton"]') ||
+                             card.querySelector('[data-content="Принять"]') ||
+                             card.querySelector('[data-action="accept"]');
         
         if (acceptButton) {
           const minDelay = settings.minDelay || 1000;

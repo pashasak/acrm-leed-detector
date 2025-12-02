@@ -63,10 +63,32 @@
       switch (message.action) {
         case 'settingsUpdated':
           console.log('[AmoCRM Auto-Accept] Settings updated:', message.settings);
+          // Update activity settings
+          if (message.settings) {
+            if (message.settings.simulateMouseMovement !== undefined) {
+              activitySettings.simulateMouseMovement = message.settings.simulateMouseMovement;
+              console.log('[AmoCRM Auto-Accept] Mouse movement simulation:', activitySettings.simulateMouseMovement ? 'enabled' : 'disabled');
+            }
+            if (message.settings.simulateScroll !== undefined) {
+              activitySettings.simulateScroll = message.settings.simulateScroll;
+              console.log('[AmoCRM Auto-Accept] Scroll simulation:', activitySettings.simulateScroll ? 'enabled' : 'disabled');
+            }
+            // Handle overall background movement toggle
+            if (message.settings.simulateMouseMovement === false && message.settings.simulateScroll === false) {
+              stopBackgroundMouseMovement();
+            } else if (message.settings.enabled && !backgroundMovementActive) {
+              startBackgroundMouseMovement();
+            }
+          }
           sendResponse({ success: true });
           break;
         case 'getStatus':
-          sendResponse({ success: true, status: 'active' });
+          sendResponse({ 
+            success: true, 
+            status: 'active',
+            backgroundMovementActive: backgroundMovementActive,
+            activitySettings: activitySettings
+          });
           break;
         default:
           sendResponse({ success: false, error: 'Unknown action' });
@@ -301,6 +323,460 @@
   let sessionStartTime = Date.now();
   let clicksInSession = 0;
 
+  // Background mouse movement simulation state
+  let backgroundMovementActive = false;
+  let backgroundMovementIntervalId = null;
+  let lastMousePosition = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+  let isInActivityBurst = false; // Whether currently in an active period
+  let debugCursorElement = null; // Visual debug indicator for simulated mouse
+
+  /**
+   * Create or get the debug cursor indicator element
+   */
+  function getDebugCursor() {
+    if (!debugCursorElement) {
+      debugCursorElement = document.createElement('div');
+      debugCursorElement.id = 'amocrm-debug-cursor';
+      debugCursorElement.style.cssText = `
+        position: fixed;
+        width: 12px;
+        height: 12px;
+        background: rgba(255, 0, 0, 0.7);
+        border: 2px solid white;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 999999;
+        transform: translate(-50%, -50%);
+        transition: left 0.05s linear, top 0.05s linear;
+        box-shadow: 0 0 4px rgba(0,0,0,0.3);
+      `;
+      document.body.appendChild(debugCursorElement);
+    }
+    return debugCursorElement;
+  }
+
+  /**
+   * Update debug cursor position
+   */
+  function updateDebugCursor(x, y) {
+    const cursor = getDebugCursor();
+    cursor.style.left = x + 'px';
+    cursor.style.top = y + 'px';
+    cursor.style.display = 'block';
+  }
+
+  /**
+   * Hide debug cursor
+   */
+  function hideDebugCursor() {
+    if (debugCursorElement) {
+      debugCursorElement.style.display = 'none';
+    }
+  }
+
+  /**
+   * BACKGROUND HUMAN ACTIVITY SIMULATION
+   * Simulates natural mouse movements and scrolling while waiting for notifications
+   * Runs intermittently (not always) to appear more realistic
+   */
+
+  /**
+   * Generate smooth, natural mouse movement path using Bezier curves
+   */
+  function generateNaturalPath(startX, startY, endX, endY, steps) {
+    const points = [];
+    
+    // Generate random control points for cubic Bezier curve
+    const ctrl1X = startX + (endX - startX) * 0.3 + (Math.random() - 0.5) * 100;
+    const ctrl1Y = startY + (endY - startY) * 0.1 + (Math.random() - 0.5) * 100;
+    const ctrl2X = startX + (endX - startX) * 0.7 + (Math.random() - 0.5) * 100;
+    const ctrl2Y = startY + (endY - startY) * 0.9 + (Math.random() - 0.5) * 100;
+    
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      const t2 = t * t;
+      const t3 = t2 * t;
+      const mt = 1 - t;
+      const mt2 = mt * mt;
+      const mt3 = mt2 * mt;
+      
+      // Cubic Bezier formula
+      const x = mt3 * startX + 3 * mt2 * t * ctrl1X + 3 * mt * t2 * ctrl2X + t3 * endX;
+      const y = mt3 * startY + 3 * mt2 * t * ctrl1Y + 3 * mt * t2 * ctrl2Y + t3 * endY;
+      
+      // Add micro-jitter to simulate hand tremor
+      const jitterX = (Math.random() - 0.5) * 2;
+      const jitterY = (Math.random() - 0.5) * 2;
+      
+      points.push({ x: x + jitterX, y: y + jitterY });
+    }
+    
+    return points;
+  }
+
+  /**
+   * Get a random target position that looks like natural browsing behavior
+   */
+  function getRandomBrowsingTarget() {
+    const behaviors = [
+      // Look at main content area (most common)
+      () => ({
+        x: window.innerWidth * (0.2 + Math.random() * 0.6),
+        y: window.innerHeight * (0.2 + Math.random() * 0.5)
+      }),
+      // Check sidebar
+      () => ({
+        x: window.innerWidth * (0.05 + Math.random() * 0.15),
+        y: window.innerHeight * (0.1 + Math.random() * 0.7)
+      }),
+      // Look at top navigation
+      () => ({
+        x: window.innerWidth * (0.1 + Math.random() * 0.8),
+        y: window.innerHeight * (0.02 + Math.random() * 0.1)
+      }),
+      // Scroll area / right side
+      () => ({
+        x: window.innerWidth * (0.85 + Math.random() * 0.1),
+        y: window.innerHeight * (0.2 + Math.random() * 0.6)
+      }),
+      // Random spot (occasional exploration)
+      () => ({
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight
+      })
+    ];
+    
+    // Weight towards main content area
+    const weights = [0.4, 0.2, 0.15, 0.1, 0.15];
+    const roll = Math.random();
+    let cumulative = 0;
+    
+    for (let i = 0; i < weights.length; i++) {
+      cumulative += weights[i];
+      if (roll < cumulative) {
+        return behaviors[i]();
+      }
+    }
+    
+    return behaviors[0]();
+  }
+
+  /**
+   * Perform a natural scroll action
+   */
+  function performNaturalScroll() {
+    if (!backgroundMovementActive) return;
+    
+    const scrollBehaviors = [
+      // Small scroll down (reading)
+      () => ({ deltaY: 50 + Math.random() * 150, duration: 300 + Math.random() * 400 }),
+      // Small scroll up (re-reading)
+      () => ({ deltaY: -(30 + Math.random() * 100), duration: 200 + Math.random() * 300 }),
+      // Medium scroll down
+      () => ({ deltaY: 150 + Math.random() * 300, duration: 400 + Math.random() * 500 }),
+      // Large scroll down (skimming)
+      () => ({ deltaY: 300 + Math.random() * 500, duration: 500 + Math.random() * 600 }),
+      // Scroll back to top (occasionally)
+      () => ({ deltaY: -window.scrollY * (0.3 + Math.random() * 0.4), duration: 600 + Math.random() * 800 })
+    ];
+    
+    // Weight towards small/medium scrolls
+    const weights = [0.35, 0.15, 0.30, 0.15, 0.05];
+    const roll = Math.random();
+    let cumulative = 0;
+    let behavior;
+    
+    for (let i = 0; i < weights.length; i++) {
+      cumulative += weights[i];
+      if (roll < cumulative) {
+        behavior = scrollBehaviors[i]();
+        break;
+      }
+    }
+    
+    if (!behavior) behavior = scrollBehaviors[0]();
+    
+    // Don't scroll up if already at top
+    if (window.scrollY <= 0 && behavior.deltaY < 0) {
+      behavior.deltaY = Math.abs(behavior.deltaY);
+    }
+    
+    // Don't scroll down if at bottom
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    if (window.scrollY >= maxScroll && behavior.deltaY > 0) {
+      behavior.deltaY = -Math.abs(behavior.deltaY) * 0.5;
+    }
+    
+    // Perform smooth scroll in steps
+    const steps = 8 + Math.floor(Math.random() * 8); // 8-16 steps
+    const stepDelay = behavior.duration / steps;
+    const stepAmount = behavior.deltaY / steps;
+    
+    console.log('[AmoCRM Auto-Accept] Simulating scroll:', {
+      deltaY: Math.round(behavior.deltaY),
+      duration: Math.round(behavior.duration) + 'ms',
+      currentScrollY: Math.round(window.scrollY)
+    });
+    
+    for (let i = 0; i < steps; i++) {
+      setTimeout(() => {
+        if (!backgroundMovementActive) return;
+        
+        // Add slight variation to each step (not perfectly smooth)
+        const variation = 1 + (Math.random() - 0.5) * 0.3;
+        const actualStep = stepAmount * variation;
+        
+        window.scrollBy({
+          top: actualStep,
+          behavior: 'auto' // We're doing our own smoothing
+        });
+        
+        // Also dispatch wheel event for sites that listen to it
+        const wheelEvent = new WheelEvent('wheel', {
+          bubbles: true,
+          cancelable: true,
+          deltaY: actualStep,
+          deltaMode: 0 // Pixels
+        });
+        document.dispatchEvent(wheelEvent);
+      }, i * stepDelay);
+    }
+  }
+
+  /**
+   * Simulate a single background mouse movement sequence
+   */
+  function performBackgroundMouseMovement() {
+    if (!backgroundMovementActive) return;
+    
+    const target = getRandomBrowsingTarget();
+    const steps = 5 + Math.floor(Math.random() * 10); // 5-15 steps
+    const path = generateNaturalPath(lastMousePosition.x, lastMousePosition.y, target.x, target.y, steps);
+    
+    // Calculate total duration for this movement (varies with distance)
+    const distance = Math.sqrt(
+      Math.pow(target.x - lastMousePosition.x, 2) + 
+      Math.pow(target.y - lastMousePosition.y, 2)
+    );
+    const baseDuration = 200 + distance * 0.5; // Faster for short distances
+    const stepDelay = baseDuration / steps;
+    
+    path.forEach((point, index) => {
+      setTimeout(() => {
+        // Don't continue if movement was stopped
+        if (!backgroundMovementActive) return;
+        
+        const moveEvent = new MouseEvent('mousemove', {
+          bubbles: true,
+          cancelable: true,
+          view: window,
+          clientX: point.x,
+          clientY: point.y,
+          screenX: point.x,
+          screenY: point.y
+        });
+        
+        document.dispatchEvent(moveEvent);
+        
+        // Update debug cursor visual
+        updateDebugCursor(point.x, point.y);
+        
+        // Update last position
+        if (index === path.length - 1) {
+          lastMousePosition = { x: point.x, y: point.y };
+        }
+      }, index * stepDelay);
+    });
+    
+    // Occasionally simulate a hover pause over an element
+    if (Math.random() < 0.2) {
+      const elementAtTarget = document.elementFromPoint(target.x, target.y);
+      if (elementAtTarget) {
+        setTimeout(() => {
+          if (!backgroundMovementActive) return;
+          
+          // Dispatch mouseenter/mouseover on the element
+          elementAtTarget.dispatchEvent(new MouseEvent('mouseenter', {
+            bubbles: true,
+            cancelable: true,
+            view: window,
+            clientX: target.x,
+            clientY: target.y
+          }));
+          
+          // After a short pause, dispatch mouseleave
+          setTimeout(() => {
+            if (!backgroundMovementActive) return;
+            elementAtTarget.dispatchEvent(new MouseEvent('mouseleave', {
+              bubbles: true,
+              cancelable: true,
+              view: window,
+              clientX: target.x,
+              clientY: target.y
+            }));
+          }, 100 + Math.random() * 300);
+        }, baseDuration + 50);
+      }
+    }
+  }
+
+  /**
+   * Get current activity settings from storage
+   */
+  let activitySettings = {
+    simulateMouseMovement: true,
+    simulateScroll: true
+  };
+
+  /**
+   * Perform a random background activity (mouse move or scroll)
+   */
+  function performRandomActivity() {
+    if (!backgroundMovementActive) return;
+    
+    // Determine what activities are enabled
+    const canMove = activitySettings.simulateMouseMovement;
+    const canScroll = activitySettings.simulateScroll;
+    
+    // If both disabled, do nothing
+    if (!canMove && !canScroll) {
+      return;
+    }
+    
+    // If only one is enabled, do that one
+    if (!canMove && canScroll) {
+      performNaturalScroll();
+      return;
+    }
+    
+    if (canMove && !canScroll) {
+      performBackgroundMouseMovement();
+      return;
+    }
+    
+    // Both enabled: 60% mouse movement, 40% scroll
+    if (Math.random() < 0.6) {
+      performBackgroundMouseMovement();
+    } else {
+      performNaturalScroll();
+    }
+  }
+
+  /**
+   * Schedule the next activity burst
+   * Activity happens in bursts with idle periods in between
+   */
+  function scheduleActivityBurst() {
+    if (!backgroundMovementActive) return;
+    
+    // Idle period: 10-45 seconds of no activity
+    const idleDuration = 10000 + Math.random() * 35000;
+    
+    console.log('[AmoCRM Auto-Accept] Idle period:', Math.round(idleDuration / 1000) + 's');
+    
+    backgroundMovementIntervalId = setTimeout(() => {
+      if (!backgroundMovementActive) return;
+      
+      // Start an activity burst
+      startActivityBurst();
+    }, idleDuration);
+  }
+
+  /**
+   * Start a burst of activity (several movements/scrolls in sequence)
+   */
+  function startActivityBurst() {
+    if (!backgroundMovementActive) return;
+    
+    isInActivityBurst = true;
+    
+    // Activity burst: 3-8 actions over 8-25 seconds
+    const numActions = 3 + Math.floor(Math.random() * 6);
+    const burstDuration = 8000 + Math.random() * 17000;
+    const avgInterval = burstDuration / numActions;
+    
+    console.log('[AmoCRM Auto-Accept] Starting activity burst:', {
+      actions: numActions,
+      duration: Math.round(burstDuration / 1000) + 's'
+    });
+    
+    let actionIndex = 0;
+    
+    function performNextAction() {
+      if (!backgroundMovementActive || actionIndex >= numActions) {
+        isInActivityBurst = false;
+        // Schedule next idle + burst cycle
+        scheduleActivityBurst();
+        return;
+      }
+      
+      // Random chance to skip an action (simulates inconsistent activity)
+      if (Math.random() > 0.15) {
+        performRandomActivity();
+      }
+      
+      actionIndex++;
+      
+      // Variable delay to next action
+      const nextDelay = avgInterval * (0.5 + Math.random());
+      setTimeout(performNextAction, nextDelay);
+    }
+    
+    // Start the burst
+    performNextAction();
+  }
+
+  /**
+   * Start background activity simulation
+   */
+  function startBackgroundMouseMovement() {
+    if (backgroundMovementActive) {
+      console.log('[AmoCRM Auto-Accept] Background activity already active');
+      return;
+    }
+    
+    backgroundMovementActive = true;
+    console.log('[AmoCRM Auto-Accept] Starting background activity simulation (mouse + scroll)');
+    
+    // Start with an initial delay before first activity
+    const initialDelay = 3000 + Math.random() * 7000; // 3-10 seconds
+    
+    setTimeout(() => {
+      if (backgroundMovementActive) {
+        startActivityBurst();
+      }
+    }, initialDelay);
+  }
+
+  /**
+   * Stop background activity simulation
+   */
+  function stopBackgroundMouseMovement() {
+    backgroundMovementActive = false;
+    isInActivityBurst = false;
+    if (backgroundMovementIntervalId) {
+      clearTimeout(backgroundMovementIntervalId);
+      backgroundMovementIntervalId = null;
+    }
+    hideDebugCursor();
+    console.log('[AmoCRM Auto-Accept] Stopped background activity simulation');
+  }
+
+  /**
+   * Temporarily pause background movement (e.g., when clicking a button)
+   */
+  function pauseBackgroundMovement(duration) {
+    const wasActive = backgroundMovementActive;
+    if (wasActive) {
+      stopBackgroundMouseMovement();
+      setTimeout(() => {
+        if (wasActive) {
+          startBackgroundMouseMovement();
+        }
+      }, duration);
+    }
+  }
+
   /**
    * Generate a random number with Gaussian (normal) distribution
    * More realistic than uniform distribution - humans tend toward average reaction times
@@ -393,6 +869,9 @@
       console.warn('[AmoCRM Auto-Accept] Element is not visible');
       return false;
     }
+
+    // Pause background movement during the click action
+    pauseBackgroundMovement(2000);
 
     // Increment click counter for fatigue simulation
     clicksInSession++;
@@ -544,6 +1023,20 @@
         
         // Initialize lead detection (Phase 1)
         initLeadDetection();
+        
+        // Load activity settings
+        const settings = result.autoAccept || {};
+        if (settings.simulateMouseMovement !== undefined) {
+          activitySettings.simulateMouseMovement = settings.simulateMouseMovement;
+        }
+        if (settings.simulateScroll !== undefined) {
+          activitySettings.simulateScroll = settings.simulateScroll;
+        }
+        
+        // Start background activity simulation if enabled
+        if (settings.simulateMouseMovement !== false || settings.simulateScroll !== false) {
+          startBackgroundMouseMovement();
+        }
       } else {
         console.log('[AmoCRM Auto-Accept] Extension is disabled');
       }

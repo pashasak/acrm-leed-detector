@@ -2,6 +2,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize popup UI elements
   const autoAcceptToggle = document.getElementById('autoAcceptToggle');
   const soundToggle = document.getElementById('soundToggle');
+  const mouseMovementToggle = document.getElementById('mouseMovementToggle');
+  const scrollToggle = document.getElementById('scrollToggle');
   const minDelayInput = document.getElementById('minDelayInput');
   const maxDelayInput = document.getElementById('maxDelayInput');
   const statusValue = document.getElementById('statusValue');
@@ -16,6 +18,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Event listeners
   autoAcceptToggle.addEventListener('change', () => saveSettings());
   soundToggle.addEventListener('change', () => saveSettings());
+  mouseMovementToggle.addEventListener('change', () => saveSettings());
+  scrollToggle.addEventListener('change', () => saveSettings());
   minDelayInput.addEventListener('change', () => saveSettings());
   maxDelayInput.addEventListener('change', () => saveSettings());
   resetBtn.addEventListener('click', resetStatistics);
@@ -35,6 +39,8 @@ document.addEventListener('DOMContentLoaded', () => {
       // Update toggles
       autoAcceptToggle.checked = settings.enabled ?? true;
       soundToggle.checked = settings.playSound ?? false;
+      mouseMovementToggle.checked = settings.simulateMouseMovement ?? true;
+      scrollToggle.checked = settings.simulateScroll ?? true;
 
       // Update delay inputs
       minDelayInput.value = settings.minDelay ?? 1000;
@@ -64,7 +70,9 @@ document.addEventListener('DOMContentLoaded', () => {
       enabled: autoAcceptToggle.checked,
       minDelay: minDelay,
       maxDelay: maxDelay,
-      playSound: soundToggle.checked
+      playSound: soundToggle.checked,
+      simulateMouseMovement: mouseMovementToggle.checked,
+      simulateScroll: scrollToggle.checked
     };
 
     chrome.storage.local.get(['autoAccept'], (result) => {
@@ -161,6 +169,8 @@ document.addEventListener('DOMContentLoaded', () => {
       minDelay: 1000,
       maxDelay: 3000,
       playSound: false,
+      simulateMouseMovement: true,
+      simulateScroll: true,
       stats: {
         totalAccepted: 0,
         lastAccepted: null

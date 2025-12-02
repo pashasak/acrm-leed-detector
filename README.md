@@ -9,6 +9,19 @@ A Chrome extension that automatically detects and accepts new lead notifications
   - Randomized delays (configurable 1-3 seconds)
   - Random click positions within buttons
   - Realistic event sequences (mouseenter → mouseover → mousedown → mouseup → click)
+- **Background Mouse Movement**: Simulates natural browsing behavior while waiting for notifications:
+  - Random mouse movements using Bezier curves for smooth, natural paths
+  - Simulates looking at different areas (content, sidebar, navigation)
+  - Includes micro-jitter to simulate hand tremor
+  - Occasional hover pauses over elements
+- **Natural Scrolling**: Simulates realistic page scrolling:
+  - Various scroll types: small reads, medium scrolls, large skims, scroll-back
+  - Smooth multi-step scrolling with slight variations
+  - Respects page boundaries (top/bottom)
+- **Intermittent Activity**: Activity happens in bursts, not continuously:
+  - Idle periods: 10-45 seconds of no activity
+  - Activity bursts: 3-8 actions over 8-25 seconds
+  - Mix of 60% mouse movements, 40% scrolls during bursts
 - **Configurable Delays**: Choose from preset speeds or set custom min/max delays
   - Fast: 0.5-1 seconds
   - Normal: 1-3 seconds
@@ -77,6 +90,30 @@ The extension will automatically detect and accept new lead notifications on Amo
   - Validates element visibility before clicking
 - Updates statistics and plays sound (if enabled)
 
+### Background Mouse Movement
+- Runs intermittently in bursts while waiting for notifications
+- Generates smooth, natural mouse movement paths using cubic Bezier curves
+- Targets different page areas with weighted probability (main content, sidebar, navigation)
+- Includes micro-jitter to simulate hand tremor
+- Occasionally hovers over elements to simulate reading/browsing
+- Automatically pauses during lead acceptance clicks to avoid interference
+
+### Natural Scrolling Simulation
+- Various scroll behaviors weighted by probability:
+  - Small scrolls (reading): 35%
+  - Small scroll up (re-reading): 15%
+  - Medium scrolls: 30%
+  - Large scrolls (skimming): 15%
+  - Scroll back up: 5%
+- Multi-step smooth scrolling with variations
+- Respects page boundaries
+
+### Intermittent Activity Pattern
+- **Idle periods**: 10-45 seconds of no activity (simulates reading/thinking)
+- **Activity bursts**: 3-8 actions over 8-25 seconds
+- Mix of mouse movements (60%) and scrolls (40%)
+- Random chance to skip actions within bursts for more natural feel
+
 ## Settings
 
 All settings are stored locally using Chrome Storage API:
@@ -85,6 +122,7 @@ All settings are stored locally using Chrome Storage API:
 - **minDelay**: Minimum delay before accepting (milliseconds)
 - **maxDelay**: Maximum delay before accepting (milliseconds)
 - **playSound**: Enable/disable sound notifications
+- **simulateMouseMovement**: Enable/disable background mouse movement simulation (default: true)
 - **stats**: Statistics tracking (totalAccepted, lastAccepted)
 
 ## Development

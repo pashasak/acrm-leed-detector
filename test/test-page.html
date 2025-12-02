@@ -412,6 +412,54 @@
             border-left: 3px solid #667eea;
         }
 
+        /* Scrollable Content Styles */
+        .scrollable-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            line-height: 1.8;
+            color: #555;
+        }
+
+        .scrollable-content h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 22px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .scrollable-content h3 {
+            color: #444;
+            margin-top: 25px;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        .scrollable-content p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+
+        .feature-list {
+            background: #f9f9f9;
+            border-left: 4px solid #667eea;
+            padding: 15px 20px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+
+        .feature-list ul {
+            margin-left: 20px;
+        }
+
+        .feature-list li {
+            margin-bottom: 8px;
+            color: #555;
+        }
+
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -508,6 +556,76 @@
             <div class="notifications-area">
                 <div class="debug-console">
                     <div id="debugLog"></div>
+                </div>
+
+                <!-- Scrollable Content Sections -->
+                <div class="scrollable-content">
+                    <h2>📋 AmoCRM Lead Processor Documentation</h2>
+                    
+                    <h3>Introduction</h3>
+                    <p>The AmoCRM Bid Processor is a sophisticated Chrome extension designed to automatically detect and accept new lead notifications in AmoCRM with human-like behavior. This extension simulates natural human interactions to process leads more efficiently while maintaining a realistic browsing pattern.</p>
+
+                    <h3>Key Features</h3>
+                    <div class="feature-list">
+                        <ul>
+                            <li><strong>Automatic Lead Detection:</strong> Monitors AmoCRM for new lead notifications in real-time using MutationObserver</li>
+                            <li><strong>Human-like Click Simulation:</strong> Simulates natural human behavior when accepting leads with randomized delays and click positions</li>
+                            <li><strong>Background Mouse Movement:</strong> Simulates natural browsing behavior with smooth mouse movements using Bezier curves</li>
+                            <li><strong>Natural Scrolling:</strong> Performs realistic page scrolling with various scroll behaviors and speeds</li>
+                            <li><strong>Intermittent Activity:</strong> Activities happen in bursts with idle periods for more realistic behavior</li>
+                            <li><strong>Configurable Settings:</strong> Choose from preset speeds or customize delays to match your needs</li>
+                            <li><strong>Statistics Tracking:</strong> Track total accepted leads and response times</li>
+                            <li><strong>Sound Notifications:</strong> Optional audio feedback when leads are accepted</li>
+                        </ul>
+                    </div>
+
+                    <h3>How the Extension Works</h3>
+                    <p>The extension operates in several synchronized phases. First, it detects when AmoCRM lead notifications appear using a MutationObserver that monitors DOM changes. When a new lead is detected, the extension validates that it's a genuine lead notification by checking for specific class attributes and the "Новая заявка" (New Lead) title.</p>
+
+                    <p>Once a lead is detected and validated, the extension calculates realistic timing before accepting it. This includes both a "notice delay" (the time it takes a human to see the notification) and a "reaction delay" (the time to respond). These delays are distributed using a Gaussian (normal) distribution to simulate realistic human timing variations.</p>
+
+                    <h3>Human-like Behavior Simulation</h3>
+                    <p>When clicking to accept a lead, the extension simulates multiple aspects of natural human behavior:</p>
+                    <div class="feature-list">
+                        <ul>
+                            <li><strong>Random Click Position:</strong> Clicks are placed randomly within the button rather than at the center</li>
+                            <li><strong>Realistic Event Sequence:</strong> Dispatches a proper sequence of mouse events (mouseenter, mouseover, mousemove, mousedown, mouseup, click)</li>
+                            <li><strong>Variable Event Timing:</strong> Each event in the sequence has variable delays to avoid patterns</li>
+                            <li><strong>Hand Tremor:</strong> Adds micro-jitter to mouse positions to simulate natural hand movements</li>
+                            <li><strong>Fatigue Simulation:</strong> Response times gradually slow down as the extension processes more leads in a session</li>
+                            <li><strong>Distraction Simulation:</strong> Occasionally simulates being distracted with much longer delays (5% chance)</li>
+                        </ul>
+                    </div>
+
+                    <h3>Background Activity Simulation</h3>
+                    <p>While waiting for notifications, the extension simulates natural browsing behavior with background mouse movements and scrolling. These activities don't happen continuously but occur in intermittent bursts to appear more realistic.</p>
+
+                    <h3>Activity Burst Pattern</h3>
+                    <p>The background activity follows a realistic pattern of bursts and idle periods:</p>
+                    <div class="feature-list">
+                        <ul>
+                            <li><strong>Idle Periods:</strong> 10-45 seconds of no activity (simulates reading/thinking)</li>
+                            <li><strong>Activity Bursts:</strong> 3-8 actions over 8-25 seconds</li>
+                            <li><strong>Mixed Activities:</strong> 60% mouse movements, 40% scrolls during bursts</li>
+                            <li><strong>Browsing Targets:</strong> 40% main content, 20% sidebar, 15% navigation, 10% scroll area, 15% random</li>
+                            <li><strong>Variable Scroll Types:</strong> Small reads, medium scrolls, large skims, scroll-backs</li>
+                        </ul>
+                    </div>
+
+                    <h3>Settings and Configuration</h3>
+                    <p>All extension settings are stored locally using the Chrome Storage API. You can enable or disable auto-accept, configure minimum and maximum delay values, enable sound notifications, and toggle background activity simulation. Statistics are automatically tracked including total accepted leads, acceptance timestamps, and average response times.</p>
+
+                    <h3>Testing the Extension</h3>
+                    <p>Use this test page to verify the extension's functionality. Spawn test notifications using the control panel on the left. You can enable auto-spawn to generate notifications at regular intervals. The extension will automatically detect and accept these notifications. Watch the debug console to see detailed logs of all operations. The extension's background mouse movements and scrolling will activate automatically based on the configured settings and intermittent activity pattern.</p>
+
+                    <h3>Performance Considerations</h3>
+                    <p>The extension is optimized for minimal performance impact. The MutationObserver is configured to only track changes that matter for lead detection. Background activities use throttled timeouts instead of continuous timers to avoid CPU overhead. All animations and movements use native browser events rather than heavy DOM manipulations.</p>
+
+                    <h3>Privacy and Security</h3>
+                    <p>The extension only requires permissions for storage and the active tab. All settings and statistics are stored locally on your machine. No data is transmitted to external servers. The extension respects all privacy-related settings in your browser and doesn't track user behavior beyond what's necessary for operation.</p>
+
+                    <h3>Troubleshooting</h3>
+                    <p>If the extension isn't detecting leads properly, check the console logs (open DevTools with F12 on AmoCRM pages). Look for messages prefixed with [AmoCRM Auto-Accept]. If notifications aren't being accepted, verify that the extension is enabled in the popup and that the appropriate delay settings are configured. For background activity issues, ensure the simulateMouseMovement setting is enabled in the extension settings.</p>
                 </div>
             </div>
         </div>
